@@ -17,7 +17,7 @@ ENV VIEW_DISTANCE=32
 ENV TICK_DISTANCE=4
 ENV PLAYER_IDLE_TIMEOUT=30
 ENV MAX_THREADS=8
-ENV LEVEL_NAME=Bedrock level
+ENV LEVEL_NAME="Bedrock level"
 ENV LEVEL_SEED=""
 ENV DEFAULT_PLAYER_PERMISSION_LEVEL=member
 ENV TEXTUREPACK_REQUIRED=false
@@ -61,4 +61,5 @@ RUN echo '#!/bin/bash' > start.sh && \
     chmod +x start.sh
 
 # Start the server
+
 CMD ["./start.sh"]
