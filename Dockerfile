@@ -50,16 +50,22 @@ RUN chmod +x bedrock_server
 COPY --chown=minecraft:minecraft configure.sh /opt/minecraft/configure.sh
 RUN chmod +x configure.sh
 
+# Create worlds directory and set permissions
+RUN mkdir -p /opt/minecraft/worlds && chmod 755 /opt/minecraft/worlds
+
 # Expose the default Minecraft Bedrock port
 EXPOSE 19132/udp
 
-# Create startup script
+# Create startup script with proper permissions handling
 RUN echo '#!/bin/bash' > start.sh && \
     echo 'cd /opt/minecraft' >> start.sh && \
+    echo '# Fix permissions for mounted volume' >> start.sh && \
+    echo 'if [ -d "/opt/minecraft/worlds" ]; then' >> start.sh && \
+    echo '  chmod -R 755 /opt/minecraft/worlds || true' >> start.sh && \
+    echo 'fi' >> start.sh && \
     echo './configure.sh' >> start.sh && \
     echo 'LD_LIBRARY_PATH=. ./bedrock_server' >> start.sh && \
     chmod +x start.sh
 
 # Start the server
-
 CMD ["./start.sh"]
