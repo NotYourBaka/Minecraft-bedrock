@@ -34,6 +34,10 @@ RUN useradd -m -s /bin/bash minecraft
 RUN mkdir -p /opt/minecraft
 RUN chown minecraft:minecraft /opt/minecraft
 
+# Switch to minecraft user
+USER minecraft
+WORKDIR /opt/minecraft
+
 # Download Minecraft Bedrock Server (Latest Version)
 RUN wget https://www.minecraft.net/bedrockdedicatedserver/bin-linux/bedrock-server-1.21.102.1.zip -O bedrock-server.zip
 RUN unzip bedrock-server.zip
@@ -43,32 +47,25 @@ RUN rm bedrock-server.zip
 RUN chmod +x bedrock_server
 
 # Copy configuration script
-COPY configure.sh /opt/minecraft/configure.sh
+COPY --chown=minecraft:minecraft configure.sh /opt/minecraft/configure.sh
 RUN chmod +x configure.sh
 
-# Create worlds directory
-RUN mkdir -p /opt/minecraft/worlds
+# Create worlds directory and set permissions
+RUN mkdir -p /opt/minecraft/worlds && chmod 755 /opt/minecraft/worlds
 
 # Expose the default Minecraft Bedrock port
 EXPOSE 19132/udp
 
-# Create startup script that handles volume permissions properly
+# Create startup script with proper permissions handling
 RUN echo '#!/bin/bash' > start.sh && \
     echo 'cd /opt/minecraft' >> start.sh && \
-    echo '# Check if worlds directory exists and create if needed' >> start.sh && \
-    echo 'if [ ! -d "worlds" ]; then' >> start.sh && \
-    echo '  mkdir -p worlds' >> start.sh && \
-    echo 'fi' >> start.sh && \
-    echo '# Check if we can write to worlds directory' >> start.sh && \
-    echo 'if [ ! -w "worlds" ]; then' >> start.sh && \
-    echo '  echo "WARNING: Cannot write to worlds directory. World data may not persist."' >> start.sh && \
+    echo '# Fix permissions for mounted volume' >> start.sh && \
+    echo 'if [ -d "/opt/minecraft/worlds" ]; then' >> start.sh && \
+    echo '  chmod -R 755 /opt/minecraft/worlds || true' >> start.sh && \
     echo 'fi' >> start.sh && \
     echo './configure.sh' >> start.sh && \
     echo 'LD_LIBRARY_PATH=. ./bedrock_server' >> start.sh && \
     chmod +x start.sh
-
-# Run as root to handle volume permissions
-USER root
 
 # Start the server
 CMD ["./start.sh"]
